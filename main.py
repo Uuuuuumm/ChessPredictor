@@ -78,13 +78,25 @@ def parseFile(input):
 
     return games
 
-def main():
-    inputFile = "sampleData.pgn"
-    games = parseFile(inputFile)
+
+def train(dataFiles):
+    games = []
+    # for each data file append to games
+    for dataFile in dataFiles:
+        games.append(parseFile(dataFile))
     print(str(len(games)) + " games parsed successfully")
     print(games[50])
     #print(games[50].moves)
 
+
+def test():
+    pass
+
+
+def main():
+    dataFiles = ["sampleData.pgn"]
+    train(dataFiles)
+    test()
 
 
 
