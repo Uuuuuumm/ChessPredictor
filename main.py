@@ -21,10 +21,10 @@ class Tree:
         return "Tree(R: " + str(self.root.move) + "/tH: " + str(self.height)+")"
 
 class Node:
-    def __init__(self, rank, move, moveNum):
+    def __init__(self, rank, move):
         self.ranks = [rank] #array
         self.move = move
-        self.moveNumber = moveNum
+        #self.moveNumber = moveNum
         self.children = [] # array
 
     def height(self):
@@ -75,9 +75,51 @@ class Game:
     def __repr__(self):
         return self.white+"("+self.whiteRank+") vs " + self.black+"("+self.blackRank+") > "+self.winner
 
-def games_to_trees(gamesList):
-    trees = []
-    return trees
+def games_to_trees(gamesList, depth):
+
+	trees = []
+
+	for game in gamesList:
+
+		if len(game.moves) >= depth:
+			tree = Tree() 	# create a tree for this game
+			# create list of moves
+			moves = game.moves
+
+			whiteRank = game.whiteRank
+
+			blackRank = game.blackRank
+
+			# to keep track of where to attach new nodes
+			parentNode = None
+
+			for i in range(depth):
+
+				# have to create two nodes for every move for white and black
+				whiteNode = Node(whiteRank, moves[i].split(" ")[1])#, i)
+
+				# last move may be by white
+				blackNode = None
+				#blackNode = Node()
+				if len(moves[i].split(" ")) == 3:
+					blackNode = Node(blackRank, moves[i].split(" ")[2])#, i+1)
+
+				if i == 0:
+					tree.root = whiteNode
+					tree.root.children.append(blackNode)
+					parentNode = tree.root.children[0]
+				else:
+					parentNode.children.append(whiteNode)
+					parentNode.children[0].children.append(blackNode)
+                    if blackNode is None:
+                        break
+					parentNode = parentNode.children[0].children[0]
+
+
+			trees.append(tree) # add tree to list of trees
+
+	return trees
+
 
 def mergeAllTrees(treeList):
     tree = treeList[0]
@@ -119,7 +161,7 @@ def parseFile(input):
     return games
 
 
-def train(dataFiles):
+def train(dataFiles, numMoves):
     games = []
     for dataFile in dataFiles:
         games += (parseFile(dataFile))
@@ -127,7 +169,7 @@ def train(dataFiles):
     print(str(len(games)) + " games parsed successfully")
     #print(games[50])
     #print(games[50].moves)
-    return mergeAllTrees(games_to_trees(games))
+    return mergeAllTrees(games_to_trees(games, numMoves))
 
 
 #only element needed from the game could
@@ -139,7 +181,7 @@ def test(tree, avgRank):
 
 def main():
     dataFiles = ["sampleData.pgn"]
-    decisionTree = train(dataFiles)
+    decisionTree = train(dataFiles, 3)
     print(decisionTree)
     test(decisionTree, 555)
 
