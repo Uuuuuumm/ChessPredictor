@@ -1,6 +1,18 @@
 import numpy
 import regex as re
 
+class Tree:
+    def __init__(self):
+        root = None
+
+    def merge(self, tree):
+        pass
+
+class Node:
+    def __init__(self):
+        ranks = None #array
+        children = None # array
+
 class Game:
     def __init__(self):
         self.white = None
@@ -25,6 +37,13 @@ class Game:
     def __repr__(self):
         return self.white+"("+self.whiteRank+") vs " + self.black+"("+self.blackRank+") > "+self.winner
 
+def games_to_trees(gamesList):
+    trees = []
+    return trees
+
+def mergeAllTrees(trreList):
+    tree = None
+    return tree
 
 def parseFile(input):
     games = []
@@ -64,6 +83,9 @@ def main():
     games = parseFile(inputFile)
     print(str(len(games)) + " games parsed successfully")
     print(games[50])
+    #print(games[50].moves)
+
+
 
 
 main()
