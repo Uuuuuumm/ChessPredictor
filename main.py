@@ -2,23 +2,35 @@ import numpy
 import regex as re
 
 class Tree:
-    def __init__(self):
-        self.root = None
+	def __init__(self):
+		self.root = None
 
-    def merge(self, tree):
-        self.root.merge(tree.root)
+	def merge(self, tree):
+		self.root.merge(tree.root)
 
-    def navigate(self, rank):
-        nodes = [self.root]
-        while len(nodes[-1].children) > 0:
-            nodes.append(nodes[-1].clostestChild(rank))
+	def navigate(self, rank):
+		nodes = [self.root]
+		while len(nodes[-1].children) > 0:
+			nodes.append(nodes[-1].getClostestChild(rank))
 
-        return [n.move for n in nodes]
+		return [n.move for n in nodes]
 
-    def height(self):
-        return root.height()
-    def __repr__(self):
-        return "Tree(R: " + str(self.root.move) + "/tH: " + str(self.height)+")"
+	def height(self):
+		return self.root.height()
+
+	def worse_height(self):
+		node = self.root
+		height = 0
+		while node is not None:
+			node = node.children[0]
+			height = height + 1
+
+		return height
+
+	def __repr__(self):
+		# return "Tree(R: " + str(self.root.move) + ", C: " + str(len(self.root.children))+")"
+		return "Tree(R: " + str(self.root.move) + ", H: " + str(self.height())+", C: " + str(len(self.root.children))+")"
+		# return "Tree(R: " + str(self.root.move) + "/tH: " + str(self.worse_height)+")"
 
 class Node:
     def __init__(self, rank, move):
@@ -29,6 +41,8 @@ class Node:
 
     def height(self):
         childHeights = [c.height() for c in self.children]
+        if len(childHeights) == 0:
+            return 1
         return 1 + max(childHeights)
 
     def getClostestChild(self, rank):
@@ -48,89 +62,109 @@ class Node:
                 if self_child.move == node_child.move:
                     self_child.merge(node_child)
 
+        for node_child in node.children:
+            hasNode = False
+            for self_child in self.children:
+                if self_child.move == node_child.move:
+                    hasNode = True
+
+            if not hasNode:
+                self.children.append(node_child)
+
     def __repr__(self):
         return "Node("+str(self.move) + "/tH: " + str(self.height)+")"
 
+    def print(self):
+        print(self.move)
+        for c in self.children:
+            c.print()
+
 class Game:
-    def __init__(self):
-        self.white = None
-        self.black = None
-        self.whiteRank = None
-        self.blackRank = None
-        self.opening = None
-        self.moves = None
-        self.result = None
-        self.winner = None
-    def setResult(self, res):
-        self.result = res
-        w,b = res.split("-")
-        w = (int(w.split("/")[0]) / int(w.split("/")[1]) if "/" in w else int(w))
-        b = int(b.split("/")[0]) / int(b.split("/")[1]) if "/" in b else int(b)
-        if w > b:
-            self.winner = "White"
-        elif w == b:
-            self.winner = "Draw"
-        else:
-            self.winner = "Black"
-    def __repr__(self):
-        return self.white+"("+self.whiteRank+") vs " + self.black+"("+self.blackRank+") > "+self.winner
+	def __init__(self):
+		self.white = None
+		self.black = None
+		self.whiteRank = None
+		self.blackRank = None
+		self.opening = None
+		self.moves = None
+		self.result = None
+		self.winner = None
+	def setResult(self, res):
+		self.result = res
+		w,b = res.split("-")
+		w = (int(w.split("/")[0]) / int(w.split("/")[1]) if "/" in w else int(w))
+		b = int(b.split("/")[0]) / int(b.split("/")[1]) if "/" in b else int(b)
+		if w > b:
+			self.winner = "White"
+		elif w == b:
+			self.winner = "Draw"
+		else:
+			self.winner = "Black"
+	def __repr__(self):
+		return self.white+"("+self.whiteRank+") vs " + self.black+"("+self.blackRank+") > "+self.winner
 
-def games_to_trees(gamesList, depth):
+def games_to_trees(gamesList, numTurns):
 
-	trees = []
+    trees = []
 
-	for game in gamesList:
+    for game in gamesList:
+        # if not ("e4" in game.moves[0]):
+        #     continue
 
-		if len(game.moves) >= depth:
-			tree = Tree() 	# create a tree for this game
-			# create list of moves
-			moves = game.moves
+        if len(game.moves) >= numTurns:
+            tree = Tree() 	# create a tree for this game
+            # create list of moves
+            moves = game.moves
+            whiteRank = game.whiteRank
+            blackRank = game.blackRank
 
-			whiteRank = game.whiteRank
+            # to keep track of where to attach new nodes
+            parentNode = None
 
-			blackRank = game.blackRank
+            for i in range(numTurns):
 
-			# to keep track of where to attach new nodes
-			parentNode = None
+                if parentNode is None and i > 0:
+                    break
 
-			for i in range(depth):
+                # have to create two nodes for every move for white and black
+                whiteNode = Node(whiteRank, moves[i].split(" ")[1])#, i)
 
-				# have to create two nodes for every move for white and black
-				whiteNode = Node(whiteRank, moves[i].split(" ")[1])#, i)
+                # last move may be by white
+                blackNode = None
+                #blackNode = Node()
+                if len(moves[i].split(" ")) == 4:
+                    blackNode = Node(blackRank, moves[i].split(" ")[2])#, i+1)
+                # print(len(moves[i].split(" ")))
+                if i == 0:
+                    tree.root = whiteNode
+                    # if blackNode is None:
+                    #     break
+                    # whiteNode.children.append(blackNode)
+                    # parentNode = blackNode
+                else:
+                    parentNode.children.append(whiteNode)
 
-				# last move may be by white
-				blackNode = None
-				#blackNode = Node()
-				if len(moves[i].split(" ")) == 3:
-					blackNode = Node(blackRank, moves[i].split(" ")[2])#, i+1)
+                if blackNode is None:
+                    break
+                whiteNode.children.append(blackNode)
+                parentNode = blackNode
 
-				if i == 0:
-					tree.root = whiteNode
-					tree.root.children.append(blackNode)
-					parentNode = tree.root.children[0]
-				else:
-					parentNode.children.append(whiteNode)
-					parentNode.children[0].children.append(blackNode)
-                    if blackNode is None:
-                        break
-					parentNode = parentNode.children[0].children[0]
+            trees.append(tree) # add tree to list of trees
 
-
-			trees.append(tree) # add tree to list of trees
-
-	return trees
+    return trees
 
 
 def mergeAllTrees(treeList):
-    tree = treeList[0]
-    for t in range(1, len(treeList)):
-        tree.merge(treeList[t])
-    return tree
+	tree = treeList[0]
+	for t in range(1, len(treeList)):
+		tree.merge(treeList[t])
+	return tree
 
 def parseFile(input):
     games = []
     with open(input) as f:
         gameObj = None
+        gameValid = True
         for line in f:
             if re.match(r'^\[Event .*', line):
                 # print("new Game found")
@@ -146,44 +180,60 @@ def parseFile(input):
                 gameObj.setResult(match)
             elif re.match(r'^\[WhiteElo .*', line):
                 match = re.match(r'^(?:\[WhiteElo "(.*)"\])$', line).groups()[0]
-                gameObj.whiteRank = match
+                if match == "?":
+                    gameValid = False
+                else:
+                    gameObj.whiteRank = int(match)
             elif re.match(r'^\[BlackElo .*', line):
                 match = re.match(r'^(?:\[BlackElo "(.*)"\])$', line).groups()[0]
-                gameObj.blackRank = match
+                if match == "?":
+                    gameValid = False
+                else:
+                    gameObj.blackRank = int(match)
+
+
             elif re.match(r'^\[Opening .*', line):
                 match = re.match(r'^\[Opening "(.*)"\]$', line).groups()[0]
                 gameObj.opening = match
             elif re.match(r'^1. *', line):
                 # parse moves
                 gameObj.moves = re.findall(r'([1-9][0-9]?\. (?:(?:O-O(?:-0)?)|(?:[KQNBR]?[a-h]?x?[a-h][1-8](?:=[KQNBR])?[\+#]? )){1,2})', line)
-                games.append(gameObj)
+                if gameValid:
+                    games.append(gameObj)
+                gameValid = True
 
     return games
 
 
-def train(dataFiles, numMoves):
+def train(dataFiles, numTurns):
     games = []
     for dataFile in dataFiles:
         games += (parseFile(dataFile))
 
     print(str(len(games)) + " games parsed successfully")
-    #print(games[50])
-    #print(games[50].moves)
-    return mergeAllTrees(games_to_trees(games, numMoves))
+    trees = games_to_trees(games, numTurns)
+    # for i in range(0, 10):
+    #     print(trees[i])
+    return mergeAllTrees(trees)
 
 
 #only element needed from the game could
 def test(tree, avgRank):
-    #avgRank = (game.whiteRank + game.blackRank) / 2
-    movesList = tree.navigate(avgRank)
-    return movesList
+	#avgRank = (game.whiteRank + game.blackRank) / 2
+	movesList = tree.navigate(avgRank)
+	return movesList
 
 
 def main():
-    dataFiles = ["sampleData.pgn"]
-    decisionTree = train(dataFiles, 3)
+    dataFiles = ["sampleData.pgn", "trainingData/td1.pgn"]
+    decisionTree = train(dataFiles, 2)
+    # decisionTree.root.print()
+
     print(decisionTree)
-    test(decisionTree, 555)
+    # print(decisionTree.root)
+    # print(decisionTree.root.children[0])
+    moveList = test(decisionTree, 1200)
+    print(moveList)
 
 
 main()
