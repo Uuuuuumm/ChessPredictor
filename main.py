@@ -3,15 +3,53 @@ import regex as re
 
 class Tree:
     def __init__(self):
-        root = None
+        self.root = None
 
     def merge(self, tree):
-        pass
+        self.root.merge(tree.root)
+
+    def navigate(self, rank):
+        nodes = [self.root]
+        while len(nodes[-1].children) > 0:
+            nodes.append(nodes[-1].clostestChild(rank))
+
+        return [n.move for n in nodes]
+
+    def height(self):
+        return root.height()
+    def __repr__(self):
+        return "Tree(R: " + str(self.root.move) + "/tH: " + str(self.height)+")"
 
 class Node:
-    def __init__(self):
-        ranks = None #array
-        children = None # array
+    def __init__(self, rank, move, moveNum):
+        self.ranks = [rank] #array
+        self.move = move
+        self.moveNumber = moveNum
+        self.children = [] # array
+
+    def height(self):
+        childHeights = [c.height() for c in self.children]
+        return 1 + max(childHeights)
+
+    def getClostestChild(self, rank):
+        clostestChild = self.children[0]
+        for c in range(1, len(self.children)):
+            if abs(self.children[c].avgRank() - rank) < abs(clostestChild.avgRank() - rank):
+                clostestChild = self.children[c]
+        return clostestChild
+
+    def avgRank(self):
+        return sum(self.ranks) / len(self.ranks)
+
+    def merge(self, node):
+        self.ranks += node.ranks
+        for self_child in self.children:
+            for node_child in node.children:
+                if self_child.move == node_child.move:
+                    self_child.merge(node_child)
+
+    def __repr__(self):
+        return "Node("+str(self.move) + "/tH: " + str(self.height)+")"
 
 class Game:
     def __init__(self):
@@ -41,8 +79,10 @@ def games_to_trees(gamesList):
     trees = []
     return trees
 
-def mergeAllTrees(trreList):
-    tree = None
+def mergeAllTrees(treeList):
+    tree = treeList[0]
+    for t in range(1, len(treeList)):
+        tree.merge(treeList[t])
     return tree
 
 def parseFile(input):
@@ -81,23 +121,27 @@ def parseFile(input):
 
 def train(dataFiles):
     games = []
-    # for each data file append to games
     for dataFile in dataFiles:
-        games.append(parseFile(dataFile))
+        games += (parseFile(dataFile))
+
     print(str(len(games)) + " games parsed successfully")
-    print(games[50])
+    #print(games[50])
     #print(games[50].moves)
+    return mergeAllTrees(games_to_trees(games))
 
 
-def test():
-    pass
+#only element needed from the game could
+def test(tree, avgRank):
+    #avgRank = (game.whiteRank + game.blackRank) / 2
+    movesList = tree.navigate(avgRank)
+    return movesList
 
 
 def main():
     dataFiles = ["sampleData.pgn"]
-    train(dataFiles)
-    test()
-
+    decisionTree = train(dataFiles)
+    print(decisionTree)
+    test(decisionTree, 555)
 
 
 main()
